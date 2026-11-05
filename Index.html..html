@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101426">
+<title>Color Rush – Reaktionsspiel</title>
+<style>
+:root{color-scheme:dark;--bg:#101426;--panel:#1b2340;--text:#f6f7ff;--muted:#aab3d2;--accent:#8b7cff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#27335d 0,#101426 58%);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);display:grid;place-items:center;padding:18px}
+main{width:min(100%,520px)}.card{background:rgba(27,35,64,.94);border:1px solid #39466e;border-radius:24px;padding:22px;box-shadow:0 18px 55px #0006}
+h1{margin:0;font-size:clamp(2rem,9vw,3rem);letter-spacing:.04em;text-align:center}.sub{text-align:center;color:var(--muted);margin:4px 0 20px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}.stat{background:#111a32;border-radius:14px;padding:10px;text-align:center}.stat small{display:block;color:var(--muted);font-size:.75rem}.stat strong{font-size:1.45rem}
+.target{border-radius:18px;background:#111a32;padding:16px;text-align:center;margin-bottom:14px}.target p{margin:0 0 10px;color:var(--muted)}#targetColor{height:76px;border-radius:14px;border:3px solid #ffffff55;box-shadow:inset 0 0 0 1px #0002}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.color{height:88px;border:0;border-radius:17px;touch-action:manipulation;box-shadow:inset 0 -5px #0002,0 5px 15px #0003;cursor:pointer}.color:active{transform:scale(.97)}button:focus-visible{outline:3px solid white;outline-offset:3px}
+.actions{display:flex;gap:10px;margin-top:16px}.action{flex:1;border:0;border-radius:13px;padding:14px;font-weight:750;font-size:1rem;background:var(--accent);color:white;cursor:pointer}.action.secondary{background:#303c63}
+#message{min-height:28px;text-align:center;color:#d8dcff;margin:14px 0 0}.premium{margin-top:18px;padding-top:16px;border-top:1px solid #39466e;text-align:center}.premium p{color:var(--muted);font-size:.88rem;line-height:1.45}.premium a{display:inline-block;background:#f5c451;color:#241b05;text-decoration:none;font-weight:800;padding:12px 18px;border-radius:12px}
+.note{font-size:.76rem;color:#9da8cc;text-align:center;margin:14px 4px 0;line-height:1.4}
+</style>
+</head>
+<body>
+<main>
+<section class="card">
+<h1>COLOR RUSH</h1><div class="sub">Triff die richtige Farbe. Schlage deinen Highscore!</div>
+<div class="stats">
+ <div class="stat"><small>PUNKTE</small><strong id="score">0</strong></div>
+ <div class="stat"><small>ZEIT</small><strong><span id="time">30</span>s</strong></div>
+ <div class="stat"><small>BESTWERT</small><strong id="best">0</strong></div>
+</div>
+<div class="target"><p>TIPPE AUF DIESE FARBE</p><div id="targetColor" aria-label="Zielfarbe"></div></div>
+<div class="grid" id="choices">
+ <button class="color" aria-label="Farboption 1"></button><button class="color" aria-label="Farboption 2"></button>
+ <button class="color" aria-label="Farboption 3"></button><button class="color" aria-label="Farboption 4"></button>
+</div>
+<div id="message" aria-live="polite">Drücke „Spiel starten“!</div>
+<div class="actions"><button class="action" id="start">Spiel starten</button><button class="action secondary" id="reset">Neustart</button></div>
+<div class="premium">
+ <strong>✨ COLOR RUSH PREMIUM</strong>
+ <p>Unterstütze das Spiel und erhalte später zusätzliche Designs und Spielmodi. Der Kaufbutton ist erst aktiv, wenn du deinen eigenen PayPal-Zahlungslink eingetragen hast.</p>
+ <a id="buy" href="#" aria-label="Premium kaufen">Premium – 2,99 €</a>
+</div>
+</section>
+<div class="note">Kostenloses Minispiel. Premium-Käufe sind derzeit noch nicht freigeschaltet. Keine Zahlungsdaten in dieses Spiel eingeben.</div>
+</main>
+<script>
+(()=>{
+ const colors=[{name:"Rot",hex:"#ff4d67"},{name:"Blau",hex:"#398bff"},{name:"Grün",hex:"#20c997"},{name:"Gelb",hex:"#ffc857"},{name:"Lila",hex:"#a477ff"},{name:"Orange",hex:"#ff914d"}];
+ const buttons=[...document.querySelectorAll(".color")],target=document.querySelector("#targetColor"),scoreEl=document.querySelector("#score"),timeEl=document.querySelector("#time"),bestEl=document.querySelector("#best"),message=document.querySelector("#message");
+ let score=0,time=30,timer=null,running=false,answer=null;
+ let best=Number(localStorage.getItem("colorRushBest")||0);bestEl.textContent=best;
+ function round(){let picks=[...colors].sort(()=>Math.random()-.5).slice(0,4);answer=picks[Math.floor(Math.random()*4)];target.style.background=answer.hex;buttons.forEach((b,i)=>{b.style.background=picks[i].hex;b.dataset.color=picks[i].name;});}
+ function finish(){running=false;clearInterval(timer);timer=null;message.textContent=`Zeit vorbei! Du hast ${score} Punkte erreicht.`;if(score>best){best=score;localStorage.setItem("colorRushBest",best);bestEl.textContent=best;}}
+ function start(){clearInterval(timer);score=0;time=30;running=true;scoreEl.textContent=score;timeEl.textContent=time;message.textContent="Los geht's!";round();timer=setInterval(()=>{time--;timeEl.textContent=time;if(time<=0)finish();},1000);}
+ buttons.forEach(b=>b.addEventListener("click",()=>{if(!running)return;if(b.dataset.color===answer.name){score+=10;message.textContent="Richtig! +10 Punkte";}else{score=Math.max(0,score-5);message.textContent="Leider falsch. −5 Punkte";}scoreEl.textContent=score;round();}));
+ document.querySelector("#start").addEventListener("click",start);
+ document.querySelector("#reset").addEventListener("click",()=>{clearInterval(timer);running=false;score=0;time=30;scoreEl.textContent=0;timeEl.textContent=30;message.textContent="Drücke „Spiel starten“!";round();});
+ round();
+ // After creating a PayPal payment link, replace the placeholder below.
+ const PAYPAL_PAYMENT_LINK="";
+ const buy=document.querySelector("#buy");
+ if(PAYPAL_PAYMENT_LINK){buy.href=PAYPAL_PAYMENT_LINK;buy.target="_blank";buy.rel="noopener";buy.addEventListener("click",()=>{message.textContent="Danke! Premium wird nach Prüfung deiner Zahlung freigeschaltet.";});}
+ else {buy.addEventListener("click",e=>{e.preventDefault();message.textContent="Premium ist noch nicht verfügbar. Richte zuerst deinen PayPal-Link ein.";});}
+})();
+</script>
+</body>
+</html>
